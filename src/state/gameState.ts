@@ -6,7 +6,6 @@ export type GameState = {
   sceneId: string;
   playerName: string;
   prologueIndex: number;
-  dormitorielResolve: number;
   recordRisk: number;
   routeHint: RouteHint;
   flags: {
@@ -23,7 +22,6 @@ export function createInitialState(): GameState {
     sceneId: 'title',
     playerName: '',
     prologueIndex: 0,
-    dormitorielResolve: 0,
     recordRisk: 0,
     routeHint: 'peace',
     flags: {},

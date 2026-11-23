@@ -2,16 +2,16 @@ import Phaser from 'phaser';
 import { loadGameState, saveGameState } from '../state/gameState';
 
 type EncounterId = 'bully_tutorial' | 'nerd_first';
-type BattlePhase = 'menu' | 'act' | 'pattern' | 'result';
+type BattlePhase = 'bully_intro' | 'menu' | 'act' | 'pattern' | 'result';
 
 export class BattleScene extends Phaser.Scene {
   private encounter: EncounterId = 'bully_tutorial';
-  private phase: BattlePhase = 'menu';
+  private phase: BattlePhase = 'bully_intro';
   private selectedMenu = 0;
   private selectedAct = 0;
   private resolve = 0;
   private positiveActs = 0;
-  private focus = 20;
+  private hp = 20;
   private heart!: Phaser.GameObjects.Rectangle;
   private enemy!: Phaser.GameObjects.Rectangle;
   private statusText!: Phaser.GameObjects.Text;
@@ -32,12 +32,12 @@ export class BattleScene extends Phaser.Scene {
 
   create(): void {
     this.encounter = (this.registry.get('encounterId') as EncounterId) || 'bully_tutorial';
-    this.phase = 'menu';
+    this.phase = this.encounter === 'bully_tutorial' ? 'bully_intro' : 'menu';
     this.selectedMenu = 0;
     this.selectedAct = 0;
     this.resolve = 0;
     this.positiveActs = 0;
-    this.focus = 20;
+    this.hp = 20;
     this.menuTexts = [];
     this.actTexts = [];
     this.bullets = [];
@@ -76,15 +76,17 @@ export class BattleScene extends Phaser.Scene {
       wordWrap: { width: 720 },
     });
     this.updateStatus();
-    this.messageText.setText(
-      this.encounter === 'bully_tutorial'
-        ? '불리가 첫 시험을 시작한다.'
-        : '너드스타블룩이 복도를 막는다.',
-    );
-    this.renderMenu();
+    if (this.encounter === 'bully_tutorial') {
+      this.messageText.setText('불리의 화려한 설명을 따라서 움직여 보자.');
+      this.time.delayedCall(1800, () => this.beginBullyIntroPattern());
+    } else {
+      this.messageText.setText('너드스타블룩이 복도를 막는다.');
+      this.renderMenu();
+    }
   }
 
   update(time: number): void {
+    if (this.phase === 'bully_intro') return;
     if (this.phase === 'menu') this.updateMenu();
     if (this.phase === 'act') this.updateAct();
     if (this.phase !== 'pattern') return;
@@ -106,16 +108,16 @@ export class BattleScene extends Phaser.Scene {
         bullet.destroy();
       } else if (time > this.invulnerableUntil &&
         Phaser.Math.Distance.Between(this.heart.x, this.heart.y, bullet.x, bullet.y) < 23) {
-        this.focus = Math.max(0, this.focus - 2);
+        this.hp = Math.max(0, this.hp - 5);
         this.invulnerableUntil = time + 650;
         this.updateStatus();
-        if (this.focus === 0) this.handleDefeat();
+        if (this.hp === 0) this.handleDefeat();
       }
     }
   }
 
   private updateStatus(): void {
-    this.statusText.setText(`집중력 ${this.focus}/20`);
+    this.statusText.setText(`HP ${this.hp}/20`);
   }
 
   private confirmPressed(): boolean {
@@ -184,9 +186,6 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private actLabels(): string[] {
-    if (this.encounter === 'bully_tutorial') {
-      return ['관찰', '대화', '피한다'];
-    }
     return ['관찰', '관심을 보인다', '조롱한다'];
   }
 
@@ -242,10 +241,6 @@ export class BattleScene extends Phaser.Scene {
       this.resolve = Math.min(100, this.resolve + (this.encounter === 'nerd_first' ? 34 : 20));
       this.positiveActs += 1;
       this.messageText.setText('상대의 행동과 말 사이의 차이를 확인한다.');
-    } else if (label === '대화') {
-      this.resolve = Math.min(100, this.resolve + 20);
-      this.positiveActs += 1;
-      this.messageText.setText('불리의 권유가 시험인지 묻는다.');
     } else {
       this.resolve = Math.min(100, this.resolve + 15);
       this.positiveActs += 1;
@@ -280,9 +275,21 @@ export class BattleScene extends Phaser.Scene {
     this.patternTimer = this.time.delayedCall(3600, () => this.finishPattern());
   }
 
+  private beginBullyIntroPattern(): void {
+    if (this.phase !== 'bully_intro') return;
+    this.phase = 'pattern';
+    this.clearMenu();
+    this.heart.setPosition(480, 370);
+    this.clearBullets();
+    this.spawnPattern();
+    this.messageText.setText('불리의 탄막을 피하라.');
+    this.patternTimer?.remove();
+    this.patternTimer = this.time.delayedCall(3600, () => this.finishBully());
+  }
+
   private spawnPattern(): void {
     const count = this.encounter === 'bully_tutorial'
-      ? 10
+      ? 8
       : this.resolve >= 68
         ? 6
         : 14;
@@ -305,9 +312,7 @@ export class BattleScene extends Phaser.Scene {
   private finishPattern(): void {
     if (this.phase !== 'pattern') return;
     this.clearBullets();
-    if (this.encounter === 'bully_tutorial' && this.positiveActs >= 2) {
-      this.finishBully();
-    } else if (this.encounter === 'nerd_first' && this.positiveActs >= 3) {
+    if (this.encounter === 'nerd_first' && this.positiveActs >= 3) {
       this.finishNerd();
     } else {
       this.phase = 'menu';
@@ -318,7 +323,7 @@ export class BattleScene extends Phaser.Scene {
   private finishBully(): void {
     this.phase = 'result';
     this.clearBullets();
-    this.messageText.setText('불리의 시험 패턴이 멈춘다.');
+    this.messageText.setText('도미토리엘이 개입해 불리를 물리친다.');
     const state = loadGameState();
     state.flags.bullyTutorial = true;
     state.sceneId = 'rescue';
@@ -344,7 +349,7 @@ export class BattleScene extends Phaser.Scene {
     if (this.phase === 'result') return;
     this.phase = 'result';
     this.clearBullets();
-    this.messageText.setText('집중력이 닿지 않는 곳까지 밀려났다.');
+    this.messageText.setText('HP가 전부 줄었다.');
     const state = loadGameState();
     state.recordRisk += 1;
     saveGameState(state);
