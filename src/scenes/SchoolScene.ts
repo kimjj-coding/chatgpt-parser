@@ -13,7 +13,7 @@ type RoomId =
   | 'hallway'
   | 'nerd';
 type NpcId = 'bully' | 'dormitoriel' | 'nerd';
-type EncounterId = 'bully_tutorial' | 'nerd_first';
+type EncounterId = 'bully_tutorial' | 'ranked_first' | 'nerd_first';
 
 export class SchoolScene extends Phaser.Scene {
   private player!: Phaser.GameObjects.Rectangle;
@@ -65,6 +65,11 @@ export class SchoolScene extends Phaser.Scene {
     if (completed === 'bully_tutorial') {
       this.room = 'rescue';
       this.state.sceneId = 'rescue';
+      saveGameState(this.state);
+    }
+    if (completed === 'ranked_first') {
+      this.room = 'hallway';
+      this.state.sceneId = 'hallway';
       saveGameState(this.state);
     }
     if (completed === 'nerd_first') {
@@ -137,6 +142,7 @@ export class SchoolScene extends Phaser.Scene {
     if (this.room === 'gate') this.drawGate();
     if (this.room === 'welfare') this.drawWelfare();
     if (this.room === 'hallway') this.drawHallway();
+    if (this.room === 'nerd') this.drawNerd();
   }
 
   private title(): string {
@@ -257,11 +263,16 @@ export class SchoolScene extends Phaser.Scene {
   private drawWelfare(): void {
     this.add.rectangle(210, 260, 128, 82, 0x7d6a50).setStrokeStyle(3, 0xb6a581);
     this.add.rectangle(720, 300, 100, 130, 0x283448).setStrokeStyle(3, 0x718096);
+    this.add.text(210, 325, '표시된 길만 건너기', {
+      color: '#cbd5e1',
+      fontFamily: 'monospace',
+      fontSize: '14px',
+    }).setOrigin(0.5);
     this.add.rectangle(420, 310, 34, 34,
       this.state.flags.welfarePuzzleSolved ? 0x22c55e : 0x94a3b8)
       .setStrokeStyle(3, 0xe5e7eb);
     this.add.text(420, 347,
-      this.state.flags.welfarePuzzleSolved ? '표시가 켜짐' : '기록 스위치',
+      this.state.flags.welfarePuzzleSolved ? '문이 열림' : '표시된 스위치',
       {
         color: '#cbd5e1',
         fontFamily: 'monospace',
@@ -275,6 +286,26 @@ export class SchoolScene extends Phaser.Scene {
 
   private drawHallway(): void {
     this.add.rectangle(480, 270, 860, 28, 0x94a3b8);
+    if (!this.state.flags.rankedFirstEncounter) {
+      this.add.text(480, 205, '복도 끝에서 책장을 넘기는 소리가 난다.', {
+        color: '#94a3b8',
+        fontFamily: 'monospace',
+        fontSize: '16px',
+      }).setOrigin(0.5);
+    }
+  }
+
+  private drawNerd(): void {
+    this.add.rectangle(480, 270, 860, 28, 0x94a3b8);
+    this.add.rectangle(840, 270, 42, 170, 0x172033)
+      .setStrokeStyle(3, this.state.flags.nerdFirstEncounter ? 0x22c55e : 0x60a5fa);
+    if (this.state.flags.nerdFirstEncounter) {
+      this.add.text(480, 205, '너드스타블룩이 비킨 길', {
+        color: '#86efac',
+        fontFamily: 'monospace',
+        fontSize: '16px',
+      }).setOrigin(0.5);
+    }
   }
 
   private createPlayer(): void {
@@ -440,8 +471,20 @@ export class SchoolScene extends Phaser.Scene {
         this.changeRoom('hallway');
       }
     } else if (this.room === 'hallway') {
-      this.prompt.setText('동쪽 복도 진행');
-      if (this.player.x >= 872) this.changeRoom('nerd');
+      if (!this.state.flags.rankedFirstEncounter && this.player.x >= 560) {
+        this.startEncounter('ranked_first');
+      } else {
+        this.prompt.setText('동쪽 복도 진행');
+        if (this.state.flags.rankedFirstEncounter && this.player.x >= 872) {
+          this.changeRoom('nerd');
+        }
+      }
+    } else if (this.room === 'nerd') {
+      if (this.state.flags.nerdFirstEncounter) {
+        this.prompt.setText('동쪽의 문이 열려 있다');
+      } else {
+        this.prompt.setText('Z / Enter - 너드스타블룩과 대화');
+      }
     } else {
       this.prompt.setText('Z / Enter - 너드스타블룩과 대화');
     }
@@ -492,6 +535,7 @@ export class SchoolScene extends Phaser.Scene {
   }
 
   private openDialogue(npc: NpcId): void {
+    if (npc === 'nerd' && this.state.flags.nerdFirstEncounter) return;
     this.activeBlock = openingDialogue[npc];
     this.lineIndex = 0;
     this.choiceMode = false;

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { loadGameState, saveGameState } from '../state/gameState';
 
-type EncounterId = 'bully_tutorial' | 'nerd_first';
+type EncounterId = 'bully_tutorial' | 'ranked_first' | 'nerd_first';
 type BattlePhase = 'bully_intro' | 'menu' | 'act' | 'pattern' | 'result';
 
 export class BattleScene extends Phaser.Scene {
@@ -51,10 +51,18 @@ export class BattleScene extends Phaser.Scene {
     this.add.rectangle(480, 270, 960, 540, 0x090b12);
     this.add.rectangle(480, 82, 960, 2, 0x303b4d);
     this.enemy = this.add.rectangle(480, 170, 78, 78,
-      this.encounter === 'bully_tutorial' ? 0xc084fc : 0x60a5fa)
+      this.encounter === 'bully_tutorial'
+        ? 0xc084fc
+        : this.encounter === 'ranked_first'
+          ? 0x86efac
+          : 0x60a5fa)
       .setStrokeStyle(3, 0xe5e7eb);
     this.add.text(480, 220,
-      this.encounter === 'bully_tutorial' ? '불리' : '너드스타블룩', {
+      this.encounter === 'bully_tutorial'
+        ? '불리'
+        : this.encounter === 'ranked_first'
+          ? '전교 2등'
+          : '너드스타블룩', {
         color: '#dfe7ef',
         fontFamily: 'monospace',
         fontSize: '15px',
@@ -79,6 +87,9 @@ export class BattleScene extends Phaser.Scene {
     if (this.encounter === 'bully_tutorial') {
       this.messageText.setText('불리의 화려한 설명을 따라서 움직여 보자.');
       this.time.delayedCall(1800, () => this.beginBullyIntroPattern());
+    } else if (this.encounter === 'ranked_first') {
+      this.messageText.setText('전교 2등은 책에서 눈을 떼지 않는다.');
+      this.renderMenu();
     } else {
       this.messageText.setText('너드스타블룩이 복도를 막는다.');
       this.renderMenu();
@@ -166,6 +177,10 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private chooseMenu(): void {
+    if (this.encounter === 'ranked_first') {
+      this.finishRanked();
+      return;
+    }
     if (this.selectedMenu === 0) {
       this.messageText.setText('먼저 상대의 목표를 확인하지 않고 맞선다.');
       this.resolve = Math.max(0, this.resolve - 10);
@@ -227,6 +242,10 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private chooseAct(): void {
+    if (this.encounter === 'ranked_first') {
+      this.finishRanked();
+      return;
+    }
     this.actTexts.forEach((text) => text.destroy());
     this.actTexts = [];
     const label = this.actLabels()[this.selectedAct];
@@ -251,6 +270,10 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private tryMercy(): void {
+    if (this.encounter === 'ranked_first') {
+      this.finishRanked();
+      return;
+    }
     if (this.encounter === 'bully_tutorial') {
       this.messageText.setText('불리는 자비를 시험하지 않는다.');
       this.startPattern();
@@ -332,6 +355,20 @@ export class BattleScene extends Phaser.Scene {
     this.time.delayedCall(2200, () => this.scene.start('SchoolScene'));
   }
 
+  private finishRanked(): void {
+    this.phase = 'result';
+    this.clearMenu();
+    this.actTexts.forEach((text) => text.destroy());
+    this.actTexts = [];
+    this.messageText.setText('전교 2등은 책을 챙겨 복도 끝으로 달아난다.');
+    const state = loadGameState();
+    state.flags.rankedFirstEncounter = true;
+    state.sceneId = 'hallway';
+    saveGameState(state);
+    this.registry.set('completedEncounter', 'ranked_first');
+    this.time.delayedCall(1500, () => this.scene.start('SchoolScene'));
+  }
+
   private finishNerd(): void {
     this.phase = 'result';
     this.clearBullets();
@@ -354,7 +391,11 @@ export class BattleScene extends Phaser.Scene {
     state.recordRisk += 1;
     saveGameState(state);
     this.time.delayedCall(1800, () => {
-      state.sceneId = this.encounter === 'bully_tutorial' ? 'flower' : 'nerd';
+      state.sceneId = this.encounter === 'bully_tutorial'
+        ? 'flower'
+        : this.encounter === 'ranked_first'
+          ? 'hallway'
+          : 'nerd';
       saveGameState(state);
       this.scene.start('SchoolScene');
     });
