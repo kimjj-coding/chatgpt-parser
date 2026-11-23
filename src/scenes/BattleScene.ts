@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { loadGameState, saveGameState } from '../state/gameState';
 
 type EncounterId = 'bully_tutorial' | 'ranked_first' | 'nerd_first';
-type BattlePhase = 'bully_intro' | 'menu' | 'act' | 'pattern' | 'result';
+type BattlePhase = 'bully_intro' | 'menu' | 'act' | 'fight' | 'pattern' | 'result';
 
 export class BattleScene extends Phaser.Scene {
   private encounter: EncounterId = 'bully_tutorial';
@@ -12,6 +12,10 @@ export class BattleScene extends Phaser.Scene {
   private resolve = 0;
   private positiveActs = 0;
   private hp = 20;
+  private enemyHp = 100;
+  private fightTarget!: Phaser.GameObjects.Rectangle;
+  private fightMarker!: Phaser.GameObjects.Rectangle;
+  private fightDirection = 1;
   private heart!: Phaser.GameObjects.Rectangle;
   private enemy!: Phaser.GameObjects.Rectangle;
   private statusText!: Phaser.GameObjects.Text;
@@ -38,6 +42,7 @@ export class BattleScene extends Phaser.Scene {
     this.resolve = 0;
     this.positiveActs = 0;
     this.hp = 20;
+    this.enemyHp = 100;
     this.menuTexts = [];
     this.actTexts = [];
     this.bullets = [];
@@ -100,6 +105,10 @@ export class BattleScene extends Phaser.Scene {
     if (this.phase === 'bully_intro') return;
     if (this.phase === 'menu') this.updateMenu();
     if (this.phase === 'act') this.updateAct();
+    if (this.phase === 'fight') {
+      this.updateFight();
+      return;
+    }
     if (this.phase !== 'pattern') return;
 
     if (this.cursors.left.isDown) this.heart.x -= 3.1;
@@ -162,6 +171,45 @@ export class BattleScene extends Phaser.Scene {
     this.menuTexts = [];
   }
 
+  private beginFight(): void {
+    this.phase = 'fight';
+    this.clearMenu();
+    this.messageText.setText('조준 마커의 위치를 선택해 공격한다.');
+    this.fightTarget = this.add.rectangle(480, 370, 500, 24, 0x1f2937)
+      .setStrokeStyle(3, 0xf8fafc);
+    this.fightMarker = this.add.rectangle(230, 370, 12, 38, 0xef4444)
+      .setStrokeStyle(2, 0xfecaca);
+    this.fightDirection = 1;
+  }
+
+  private updateFight(): void {
+    this.fightMarker.x += this.fightDirection * 5;
+    if (this.fightMarker.x >= 730) {
+      this.fightMarker.x = 730;
+      this.fightDirection = -1;
+    } else if (this.fightMarker.x <= 230) {
+      this.fightMarker.x = 230;
+      this.fightDirection = 1;
+    }
+    if (!this.confirmPressed()) return;
+
+    const distanceFromCenter = Math.abs(this.fightMarker.x - 480);
+    const damage = Math.max(8, 24 - Math.round(distanceFromCenter / 12));
+    this.enemyHp = Math.max(0, this.enemyHp - damage);
+    this.fightMarker.destroy();
+    this.fightTarget.destroy();
+    this.messageText.setText(`${damage}의 피해를 주었다.`);
+    this.resolve = Math.max(0, this.resolve - 10);
+
+    this.time.delayedCall(800, () => {
+      if (this.enemyHp === 0) {
+        this.finishNerd();
+      } else {
+        this.startPattern();
+      }
+    });
+  }
+
   private updateMenu(): void {
     if (Phaser.Input.Keyboard.JustDown(this.cursors.left!) ||
       Phaser.Input.Keyboard.JustDown(this.cursors.up!)) {
@@ -182,9 +230,7 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     if (this.selectedMenu === 0) {
-      this.messageText.setText('먼저 상대의 목표를 확인하지 않고 맞선다.');
-      this.resolve = Math.max(0, this.resolve - 10);
-      this.startPattern();
+      this.beginFight();
       return;
     }
     if (this.selectedMenu === 1) {
