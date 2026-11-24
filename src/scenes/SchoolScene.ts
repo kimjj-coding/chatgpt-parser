@@ -47,6 +47,10 @@ export class SchoolScene extends Phaser.Scene {
     super('SchoolScene');
   }
 
+  preload(): void {
+    this.load.svg('dormitoriel', '/assets/dormitoriel.svg');
+  }
+
   create(): void {
     this.state = loadGameState();
     if (!this.state.playerName) {
@@ -333,7 +337,15 @@ export class SchoolScene extends Phaser.Scene {
   }
 
   private drawNpc(id: NpcId, x: number, y: number, color: number, label: string): void {
-    const body = this.add.rectangle(x, y, 36, 36, color).setStrokeStyle(2, 0xe5e7eb);
+    let body: Phaser.GameObjects.GameObject;
+    if (id === 'dormitoriel') {
+      body = this.add.image(x, y - 2, 'dormitoriel')
+        .setDisplaySize(48, 64)
+        .setData('npcId', id);
+    } else {
+      body = this.add.rectangle(x, y, 36, 36, color).setStrokeStyle(2, 0xe5e7eb);
+      body.setData('npcId', id);
+    }
     const name = this.add.text(x, y + 38, label, {
       color: '#f8fafc',
       backgroundColor: '#111827',
@@ -341,7 +353,6 @@ export class SchoolScene extends Phaser.Scene {
       fontFamily: 'monospace',
       fontSize: '13px',
     }).setOrigin(0.5);
-    body.setData('npcId', id);
   }
 
   update(): void {
