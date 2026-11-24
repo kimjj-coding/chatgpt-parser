@@ -1,6 +1,11 @@
 import Phaser from 'phaser';
 import { openingDialogue, type DialogueBlock } from '../data/dialogue';
-import { loadGameState, saveGameState, type GameState } from '../state/gameState';
+import {
+  createInitialState,
+  loadGameState,
+  saveGameState,
+  type GameState,
+} from '../state/gameState';
 
 type RoomId =
   | 'title'
@@ -42,6 +47,9 @@ export class SchoolScene extends Phaser.Scene {
   private nameOptionTexts: Phaser.GameObjects.Text[] = [];
   private prologueText?: Phaser.GameObjects.Text;
   private prologueIndex = 0;
+  private resetKey!: Phaser.Input.Keyboard.Key;
+  private resetButtonText?: Phaser.GameObjects.Text;
+  private resetButtonRect?: Phaser.GameObjects.Rectangle;
 
   constructor() {
     super('SchoolScene');
@@ -109,6 +117,7 @@ export class SchoolScene extends Phaser.Scene {
     this.enterKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
     this.cancelKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.X);
     this.menuKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.C);
+    this.resetKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.R);
     this.prompt = this.add.text(480, 510, '', {
       color: '#cbd5e1',
       backgroundColor: '#090d16',
@@ -185,12 +194,23 @@ export class SchoolScene extends Phaser.Scene {
       fontFamily: 'monospace',
       fontSize: '15px',
     }).setOrigin(0.5);
+    this.resetButtonRect = this.add.rectangle(480, 474, 220, 38, 0x7f1d1d)
+      .setStrokeStyle(2, 0xfca5a5)
+      .setInteractive({ useHandCursor: true });
+    this.resetButtonText = this.add.text(480, 474, '처음부터 초기화', {
+      color: '#fff1f2',
+      fontFamily: 'monospace',
+      fontSize: '16px',
+    }).setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    this.resetButtonRect.on('pointerdown', () => this.resetGame());
+    this.resetButtonText.on('pointerdown', () => this.resetGame());
     this.renderNameOptions();
   }
 
   private nameOptions(): string[] {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-    return [...letters, 'BACK', 'DONE'];
+    return [...letters, 'BACK', 'DONE', 'RESET'];
   }
 
   private renderNameOptions(): void {
@@ -356,6 +376,10 @@ export class SchoolScene extends Phaser.Scene {
   }
 
   update(): void {
+    if (Phaser.Input.Keyboard.JustDown(this.resetKey)) {
+      this.resetGame();
+      return;
+    }
     if (this.room === 'title') {
       this.prompt?.setText('이름 입력 · Z / Enter 결정 · X 지움');
       const columns = 7;
@@ -385,6 +409,8 @@ export class SchoolScene extends Phaser.Scene {
         if (option === 'BACK') {
           this.nameBuffer = this.nameBuffer.slice(0, -1);
           this.nameText?.setText(this.nameBuffer || '＿');
+        } else if (option === 'RESET') {
+          this.resetGame();
         } else if (option === 'DONE') {
           this.state.playerName = this.nameBuffer.trim() || 'PLAYER';
           this.state.sceneId = 'prologue';
@@ -688,12 +714,37 @@ export class SchoolScene extends Phaser.Scene {
         fontSize: '18px',
         lineSpacing: 10,
       });
-    this.statusPanel = this.add.container(0, 0, [panel, title, content]);
+    const resetButton = this.add.rectangle(480, 390, 180, 34, 0x7f1d1d)
+      .setStrokeStyle(2, 0xfca5a5)
+      .setInteractive({ useHandCursor: true });
+    const resetLabel = this.add.text(480, 390, '처음부터 초기화', {
+      color: '#fff1f2',
+      fontFamily: 'monospace',
+      fontSize: '15px',
+    }).setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    resetButton.on('pointerdown', () => this.resetGame());
+    resetLabel.on('pointerdown', () => this.resetGame());
+    this.statusPanel = this.add.container(0, 0, [
+      panel,
+      title,
+      content,
+      resetButton,
+      resetLabel,
+    ]);
   }
 
   private closeStatus(): void {
     this.statusPanel?.destroy();
     this.statusPanel = undefined;
     this.statusOpen = false;
+  }
+
+  private resetGame(): void {
+    this.state = createInitialState();
+    saveGameState(this.state);
+    this.registry.set('completedEncounter', undefined);
+    this.registry.set('encounterId', undefined);
+    this.scene.restart();
   }
 }
