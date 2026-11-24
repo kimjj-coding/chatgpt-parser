@@ -56,7 +56,7 @@ export class SchoolScene extends Phaser.Scene {
   }
 
   preload(): void {
-    this.load.svg('dormitoriel', '/assets/dormitoriel.svg');
+    this.load.image('dormitoriel', '/assets/dormitoriel.png');
     this.load.svg('player', '/assets/player.svg');
     this.load.svg('bully', '/assets/bully.svg');
     this.load.svg('ranked', '/assets/ranked.svg');
