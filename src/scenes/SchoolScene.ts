@@ -57,6 +57,10 @@ export class SchoolScene extends Phaser.Scene {
 
   preload(): void {
     this.load.svg('dormitoriel', '/assets/dormitoriel.svg');
+    this.load.svg('player', '/assets/player.svg');
+    this.load.svg('bully', '/assets/bully.svg');
+    this.load.svg('ranked', '/assets/ranked.svg');
+    this.load.svg('nerd', '/assets/nerd.svg');
   }
 
   create(): void {
@@ -278,6 +282,7 @@ export class SchoolScene extends Phaser.Scene {
 
   private drawBullyRoom(): void {
     this.add.rectangle(480, 270, 860, 130, 0x202936);
+    this.drawNpc('bully', 480, 250, 0xc084fc, '불리');
   }
 
   private drawGate(): void {
@@ -346,12 +351,14 @@ export class SchoolScene extends Phaser.Scene {
       nerd: { x: 480, y: 350 },
     };
     const position = positions[this.room];
-    this.player = this.add.rectangle(position.x, position.y, 22, 22, 0xf87171)
-      .setStrokeStyle(2, 0xfecaca);
+    this.player = this.add.rectangle(position.x, position.y, 22, 22, 0xf87171, 0);
+    this.player.setData('sprite', this.add.image(position.x, position.y, 'player')
+      .setDisplaySize(30, 42));
+    this.player.setData('lastX', position.x);
+    this.player.setData('lastY', position.y);
   }
 
   private createNpc(): void {
-    if (this.room === 'bully_room') this.drawNpc('bully', 480, 250, 0xc084fc, '불리');
     if (this.room === 'welfare') this.drawNpc('dormitoriel', 720, 280, 0xfbbf24, '도미토리엘');
     if (this.room === 'nerd') this.drawNpc('nerd', 700, 270, 0x60a5fa, '너드스타블룩');
   }
@@ -360,6 +367,14 @@ export class SchoolScene extends Phaser.Scene {
     let body: Phaser.GameObjects.GameObject;
     if (id === 'dormitoriel') {
       body = this.add.image(x, y - 2, 'dormitoriel')
+        .setDisplaySize(48, 64)
+        .setData('npcId', id);
+    } else if (id === 'bully') {
+      body = this.add.image(x, y - 2, 'bully')
+        .setDisplaySize(48, 64)
+        .setData('npcId', id);
+    } else if (id === 'nerd') {
+      body = this.add.image(x, y - 2, 'nerd')
         .setDisplaySize(48, 64)
         .setData('npcId', id);
     } else {
@@ -530,6 +545,8 @@ export class SchoolScene extends Phaser.Scene {
   private move(dx: number, dy: number): void {
     this.player.x = Phaser.Math.Clamp(this.player.x + dx, 86, 874);
     this.player.y = Phaser.Math.Clamp(this.player.y + dy, 150, 418);
+    const sprite = this.player.getData('sprite') as Phaser.GameObjects.Image | undefined;
+    sprite?.setPosition(this.player.x, this.player.y);
   }
 
   private confirmPressed(): boolean {

@@ -34,6 +34,12 @@ export class BattleScene extends Phaser.Scene {
     super('BattleScene');
   }
 
+  preload(): void {
+    this.load.svg('battle-bully', '/assets/bully.svg');
+    this.load.svg('battle-ranked', '/assets/ranked.svg');
+    this.load.svg('battle-nerd', '/assets/nerd.svg');
+  }
+
   create(): void {
     this.encounter = (this.registry.get('encounterId') as EncounterId) || 'bully_tutorial';
     this.phase = this.encounter === 'bully_tutorial' ? 'bully_intro' : 'menu';
@@ -55,13 +61,16 @@ export class BattleScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#090b12');
     this.add.rectangle(480, 270, 960, 540, 0x090b12);
     this.add.rectangle(480, 82, 960, 2, 0x303b4d);
-    this.enemy = this.add.rectangle(480, 170, 78, 78,
-      this.encounter === 'bully_tutorial'
-        ? 0xc084fc
-        : this.encounter === 'ranked_first'
-          ? 0x86efac
-          : 0x60a5fa)
-      .setStrokeStyle(3, 0xe5e7eb);
+    const battleSprite = this.encounter === 'bully_tutorial'
+      ? 'battle-bully'
+      : this.encounter === 'ranked_first'
+        ? 'battle-ranked'
+        : 'battle-nerd';
+    this.enemy = this.add.rectangle(480, 170, 78, 78, 0x090b12, 0);
+    this.add.image(480, 170, battleSprite).setDisplaySize(
+      this.encounter === 'ranked_first' ? 92 : 96,
+      this.encounter === 'ranked_first' ? 112 : 116,
+    );
     this.add.text(480, 220,
       this.encounter === 'bully_tutorial'
         ? '불리'
