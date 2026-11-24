@@ -134,6 +134,17 @@ export class SchoolScene extends Phaser.Scene {
   private drawRoom(): void {
     this.cameras.main.setBackgroundColor('#111827');
     this.add.rectangle(480, 270, 960, 540, 0x111827);
+    this.add.rectangle(480, 112, 860, 116, 0x3b4658).setStrokeStyle(4, 0x1a2230);
+    for (let x = 70; x < 890; x += 40) {
+      this.add.rectangle(x, 112, 38, 114, 0x65758b, 0.16);
+    }
+    for (let y = 170; y < 430; y += 32) {
+      for (let x = 70; x < 890; x += 32) {
+        const shade = ((x / 32 + y / 32) % 2 === 0) ? 0x314158 : 0x35485c;
+        this.add.rectangle(x, y, 30, 30, shade, 0.42);
+      }
+    }
+    this.add.rectangle(480, 160, 860, 8, 0x182232);
     if (this.room !== 'title') {
       this.add.rectangle(480, 54, 860, 64, 0x1f2937).setStrokeStyle(2, 0x4b5563);
       this.add.text(480, 54, this.title(), {
@@ -268,15 +279,27 @@ export class SchoolScene extends Phaser.Scene {
   }
 
   private drawFlower(): void {
-    this.add.rectangle(480, 300, 860, 290, 0x202a38);
-    for (let i = 0; i < 9; i += 1) {
-      this.add.circle(240 + (i % 3) * 240, 210 + Math.floor(i / 3) * 90, 18, 0xfde68a);
+    this.add.rectangle(480, 300, 860, 290, 0x26364a);
+    this.add.rectangle(480, 164, 860, 16, 0x7b6a50).setStrokeStyle(3, 0xc7b58a);
+    for (let i = 0; i < 18; i += 1) {
+      const x = 110 + (i % 6) * 148;
+      const y = 210 + Math.floor(i / 6) * 62;
+      this.add.rectangle(x, y, 5, 18, 0x5f8f63);
+      this.add.rectangle(x - 8, y - 8, 18, 12, i % 3 === 0 ? 0xfde68a : 0x8bd3a3);
+      this.add.rectangle(x - 4, y - 12, 10, 10, i % 3 === 0 ? 0xeabf52 : 0x65b985);
     }
+    this.add.rectangle(80, 300, 18, 220, 0x1b2635).setStrokeStyle(3, 0x718096);
+    this.add.rectangle(880, 300, 18, 220, 0x1b2635).setStrokeStyle(3, 0x718096);
     this.drawNpc('bully', 480, 260, 0xc084fc, '불리');
   }
 
   private drawRescue(): void {
-    this.add.rectangle(480, 300, 860, 290, 0x202a38);
+    this.add.rectangle(480, 300, 860, 290, 0x26364a);
+    this.add.rectangle(480, 164, 860, 16, 0x7b6a50).setStrokeStyle(3, 0xc7b58a);
+    this.add.rectangle(140, 300, 170, 34, 0x3f4f63).setStrokeStyle(3, 0x9aa8ba);
+    this.add.rectangle(820, 300, 170, 34, 0x3f4f63).setStrokeStyle(3, 0x9aa8ba);
+    this.add.rectangle(140, 282, 46, 6, 0x8a7354);
+    this.add.rectangle(820, 282, 46, 6, 0x8a7354);
     this.drawNpc('dormitoriel', 480, 260, 0xfbbf24, '도미토리엘');
   }
 
@@ -290,8 +313,16 @@ export class SchoolScene extends Phaser.Scene {
   }
 
   private drawWelfare(): void {
-    this.add.rectangle(210, 260, 128, 82, 0x7d6a50).setStrokeStyle(3, 0xb6a581);
+    this.add.rectangle(210, 230, 128, 82, 0x7d6a50).setStrokeStyle(3, 0xb6a581);
+    this.add.rectangle(210, 186, 100, 12, 0x263449).setStrokeStyle(2, 0x94a3b8);
     this.add.rectangle(720, 300, 100, 130, 0x283448).setStrokeStyle(3, 0x718096);
+    this.add.rectangle(720, 246, 74, 8, 0x526172);
+    this.add.rectangle(720, 226, 36, 36, 0xf3f4f6).setStrokeStyle(3, 0x94a3b8);
+    this.add.text(720, 226, '담임실', {
+      color: '#263449',
+      fontFamily: 'monospace',
+      fontSize: '10px',
+    }).setOrigin(0.5);
     this.add.text(210, 325, '표시된 길만 건너기', {
       color: '#cbd5e1',
       fontFamily: 'monospace',
@@ -314,7 +345,14 @@ export class SchoolScene extends Phaser.Scene {
   }
 
   private drawHallway(): void {
-    this.add.rectangle(480, 270, 860, 28, 0x94a3b8);
+    this.add.rectangle(480, 270, 860, 180, 0x3d4a5c).setStrokeStyle(4, 0x1b2432);
+    this.add.rectangle(480, 174, 860, 28, 0x7b8a9d);
+    this.add.rectangle(480, 366, 860, 28, 0x7b8a9d);
+    for (let x = 120; x < 860; x += 170) {
+      this.add.rectangle(x, 270, 90, 82, 0x2a3545).setStrokeStyle(3, 0x718096);
+      this.add.rectangle(x - 30, 255, 18, 48, 0x526172);
+      this.add.rectangle(x + 30, 255, 18, 48, 0x526172);
+    }
     if (!this.state.flags.rankedFirstEncounter) {
       this.add.text(480, 205, '복도 끝에서 책장을 넘기는 소리가 난다.', {
         color: '#94a3b8',
@@ -325,7 +363,11 @@ export class SchoolScene extends Phaser.Scene {
   }
 
   private drawNerd(): void {
-    this.add.rectangle(480, 270, 860, 28, 0x94a3b8);
+    this.add.rectangle(480, 270, 860, 180, 0x3d4a5c).setStrokeStyle(4, 0x1b2432);
+    this.add.rectangle(480, 174, 860, 28, 0x7b8a9d);
+    this.add.rectangle(480, 366, 860, 28, 0x7b8a9d);
+    this.add.rectangle(130, 270, 120, 90, 0x283548).setStrokeStyle(3, 0x718096);
+    this.add.rectangle(350, 270, 120, 90, 0x283548).setStrokeStyle(3, 0x718096);
     this.add.rectangle(840, 270, 42, 170, 0x172033)
       .setStrokeStyle(3, this.state.flags.nerdFirstEncounter ? 0x22c55e : 0x60a5fa);
     if (this.state.flags.nerdFirstEncounter) {
@@ -367,15 +409,15 @@ export class SchoolScene extends Phaser.Scene {
     let body: Phaser.GameObjects.GameObject;
     if (id === 'dormitoriel') {
       body = this.add.image(x, y - 2, 'dormitoriel')
-        .setDisplaySize(48, 64)
+        .setDisplaySize(64, 96)
         .setData('npcId', id);
     } else if (id === 'bully') {
       body = this.add.image(x, y - 2, 'bully')
-        .setDisplaySize(48, 64)
+        .setDisplaySize(64, 96)
         .setData('npcId', id);
     } else if (id === 'nerd') {
       body = this.add.image(x, y - 2, 'nerd')
-        .setDisplaySize(48, 64)
+        .setDisplaySize(64, 96)
         .setData('npcId', id);
     } else {
       body = this.add.rectangle(x, y, 36, 36, color).setStrokeStyle(2, 0xe5e7eb);

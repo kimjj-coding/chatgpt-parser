@@ -61,6 +61,16 @@ export class BattleScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#090b12');
     this.add.rectangle(480, 270, 960, 540, 0x090b12);
     this.add.rectangle(480, 82, 960, 2, 0x303b4d);
+    this.add.text(120, 30, `LV 1  PLAYER`, {
+      color: '#f8fafc',
+      fontFamily: 'monospace',
+      fontSize: '18px',
+    });
+    this.add.text(320, 30, `HP ${this.hp}/20`, {
+      color: '#fbbf24',
+      fontFamily: 'monospace',
+      fontSize: '18px',
+    });
     const battleSprite = this.encounter === 'bully_tutorial'
       ? 'battle-bully'
       : this.encounter === 'ranked_first'
@@ -68,8 +78,8 @@ export class BattleScene extends Phaser.Scene {
         : 'battle-nerd';
     this.enemy = this.add.rectangle(480, 170, 78, 78, 0x090b12, 0);
     this.add.image(480, 170, battleSprite).setDisplaySize(
-      this.encounter === 'ranked_first' ? 92 : 96,
-      this.encounter === 'ranked_first' ? 112 : 116,
+      this.encounter === 'ranked_first' ? 128 : 136,
+      this.encounter === 'ranked_first' ? 192 : 204,
     );
     this.add.text(480, 220,
       this.encounter === 'bully_tutorial'
