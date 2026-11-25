@@ -16,4 +16,8 @@ const config: Phaser.Types.Core.GameConfig = {
   },
 };
 
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
+game.events.once(Phaser.Core.Events.READY, () => {
+  game.canvas.tabIndex = 0;
+  game.canvas.focus();
+});

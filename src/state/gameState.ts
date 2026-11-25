@@ -1,5 +1,11 @@
 export type RouteHint = 'peace' | 'mixed' | 'violent';
 
+export type WorldPosition = {
+  sceneId: string;
+  x: number;
+  y: number;
+};
+
 export type GameState = {
   schemaVersion: 1;
   chapterId: 'opening';
@@ -8,6 +14,10 @@ export type GameState = {
   prologueIndex: number;
   recordRisk: number;
   routeHint: RouteHint;
+  checkpoint?: WorldPosition;
+  spawnPosition?: WorldPosition;
+  encounterReturn?: WorldPosition;
+  puzzleProgress?: number;
   flags: {
     [key: string]: boolean;
   };
