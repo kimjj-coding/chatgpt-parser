@@ -17,6 +17,7 @@ export type GameState = {
   checkpoint?: WorldPosition;
   spawnPosition?: WorldPosition;
   encounterReturn?: WorldPosition;
+  previousPosition?: WorldPosition;
   puzzleProgress?: number;
   flags: {
     [key: string]: boolean;
